@@ -96,6 +96,7 @@
     padding:20px 22px;margin-bottom:18px;border:1px solid var(--border);
   }
   .setup-card h3{font-size:17px;margin-bottom:10px;color:var(--accent-dark);font-family:"Do Hyeon","Malgun Gothic",sans-serif;font-weight:400;}
+  .hint{margin:10px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.5;}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .player-row{
     display:flex;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid var(--border);
@@ -120,6 +121,11 @@
 
   /* ---------- Game screen ---------- */
   #game{display:none;}
+  #game.on{
+    display:flex;flex-direction:column;
+    height:100vh;height:100dvh;
+  }
+  body.playing{overflow:hidden;}
   #topbar{
     display:flex;justify-content:space-between;align-items:flex-start;
     padding:12px 18px;gap:12px;flex-wrap:wrap;
@@ -151,20 +157,28 @@
   }
 
   #boardWrap{
-    display:flex;justify-content:center;padding:2px 10px 16px;
+    flex:1;min-height:0;
+    display:flex;justify-content:center;align-items:center;
+    padding:2px 8px 8px;
   }
   #board{
-    position:relative;width:min(1200px,95vw);height:min(660px,max(72vh,420px));
+    position:relative;width:100%;height:100%;
   }
-  #trackCircle{
-    position:absolute;inset:0;border-radius:50%;
-    background: radial-gradient(ellipse at center, var(--bg1) 0%, var(--bg1) 60%, var(--surface2) 61%, var(--surface2) 100%);
+  #trackShape{
+    position:absolute;inset:0;
+    background:var(--surface2);
     box-shadow: inset 0 0 0 2px var(--border);
   }
+  #trackHole{
+    position:absolute;background:var(--bg1);
+  }
   .egg{
-    position:absolute;width:98px;height:70px;margin-left:-49px;margin-top:-35px;
+    position:absolute;
+    width:var(--egg-w,98px);height:var(--egg-h,70px);
+    margin-left:calc(var(--egg-w,98px) / -2);
+    margin-top:calc(var(--egg-h,70px) / -2);
     border-radius:50%;
-    background:#fff;border:3px solid var(--tile-gold);
+    background:#fff;border:var(--egg-bw,3px) solid var(--tile-gold);
     display:flex;align-items:center;justify-content:center;overflow:hidden;
     box-shadow:0 3px 6px rgba(32,48,58,0.16);
     transition:box-shadow .3s, transform .3s;
@@ -173,6 +187,13 @@
     width:100%;height:100%;object-fit:cover;display:block;
     transform:scale(1.1);
   }
+  /* 스마트폰 모드: 그림 대신 이름만 (타일을 작게 줄이기 위해) */
+  .egg .egg-name{
+    font-family:"Do Hyeon","Malgun Gothic",sans-serif;
+    font-size:var(--egg-font,13px);line-height:1.15;
+    color:var(--ink);text-align:center;
+    padding:0 4px;word-break:keep-all;
+  }
   .egg.target{
     border-color:var(--gold);
     box-shadow:0 0 0 4px var(--gold), 0 0 18px 6px rgba(227,169,61,0.7);
@@ -180,22 +201,25 @@
     z-index:5;
   }
   .chick{
-    position:absolute;width:30px;height:30px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;font-size:15px;
+    position:absolute;
+    width:var(--chick-d,30px);height:var(--chick-d,30px);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--chick-d,30px) * .5);
     border:3px solid var(--surface);box-shadow:0 2px 5px rgba(32,48,58,0.35);
     transition:left .4s ease, top .4s ease, transform .3s, opacity .3s;
     z-index:6;
   }
   .chick .feathers{
-    position:absolute;top:-10px;right:-6px;font-size:11px;
+    position:absolute;top:calc(var(--chick-d,30px) * -.34);right:-6px;
+    font-size:calc(var(--chick-d,30px) * .37);
   }
 
   #center{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    width:min(380px,40%);
+    width:var(--center-w,380px);
     display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
+    grid-template-columns:repeat(var(--cols,4),1fr);
+    gap:var(--oct-gap,10px);
   }
   .oct{
     aspect-ratio:1/1;width:100%;
@@ -209,7 +233,7 @@
   .oct:hover:not(.flipped){transform:scale(1.08);filter:brightness(1.08);}
   .octnum{
     font-family:"Do Hyeon","Malgun Gothic",sans-serif;
-    font-size:clamp(22px,3.4vw,34px);line-height:1;
+    font-size:var(--octnum-size,30px);line-height:1;
     text-shadow:0 2px 3px rgba(0,0,0,0.35);
     font-variant-numeric:tabular-nums;
   }
@@ -265,17 +289,23 @@
   </div>
 
   <div class="setup-card">
-    <h3>1. 참가 인원 선택</h3>
+    <h3>1. 어떤 기기로 하나요?</h3>
+    <div class="row" id="deviceRow"></div>
+    <p class="hint" id="deviceHint"></p>
+  </div>
+
+  <div class="setup-card">
+    <h3>2. 참가 인원 선택</h3>
     <div class="row" id="playerCountRow"></div>
   </div>
 
   <div class="setup-card">
-    <h3>2. 플레이어 색상 &amp; 꽁지(깃털) 개수 설정</h3>
+    <h3>3. 플레이어 색상 &amp; 꽁지(깃털) 개수 설정</h3>
     <div id="playerConfigList"></div>
   </div>
 
   <div class="setup-card">
-    <h3>3. 등장 인물 미리보기</h3>
+    <h3>4. 등장 인물 미리보기</h3>
     <div class="char-preview" id="charPreview"></div>
   </div>
 
@@ -298,7 +328,8 @@
 
   <div id="boardWrap">
     <div id="board">
-      <div id="trackCircle"></div>
+      <div id="trackShape"></div>
+      <div id="trackHole"></div>
       <div id="eggLayer"></div>
       <div id="center"></div>
       <div id="chickLayer"></div>
@@ -335,7 +366,19 @@ const NUM_EGG_TILES = 24;
 const NUM_CENTER_TILES = 12;
 
 let state = null;
-let setupConfig = { count: 4, tails: [2,2,2,2] };
+// 화면이 좁으면 스마트폰 모드를 기본값으로 제안
+let setupConfig = {
+  count: 4,
+  tails: [2,2,2,2],
+  device: (window.innerWidth < 820 ? 'mobile' : 'pc')
+};
+
+// 기기별 배치 규칙
+const DEVICE_SPEC = {
+  pc:     { cols:4, rows:3, maxEggW:98, minEggW:62, showPicture:true,  maxOct:110 },
+  mobile: { cols:3, rows:4, maxEggW:74, minEggW:48, showPicture:false, maxOct:150 }
+};
+function spec(){ return DEVICE_SPEC[setupConfig.device] || DEVICE_SPEC.pc; }
 
 /* ================= 유틸 ================= */
 function shuffle(arr){
@@ -356,6 +399,25 @@ function renderCharPreview(){
       <img src="${c.img}" alt="${c.name}">
     </div>
   `).join('');
+}
+
+function renderDeviceRow(){
+  const row = document.getElementById('deviceRow');
+  const hint = document.getElementById('deviceHint');
+  row.innerHTML = '';
+  [
+    {key:'pc',     label:'💻 PC · 전자칠판'},
+    {key:'mobile', label:'📱 스마트폰'}
+  ].forEach(d=>{
+    const b = document.createElement('button');
+    b.textContent = d.label;
+    b.className = 'toggle' + (d.key===setupConfig.device ? ' active' : '');
+    b.onclick = ()=>{ setupConfig.device = d.key; renderDeviceRow(); };
+    row.appendChild(b);
+  });
+  hint.textContent = setupConfig.device==='mobile'
+    ? '달걀 타일에 인물 이름만 표시해 타일을 작게 줄이고, 가운데 팔각형 타일은 3열 4행으로 크게 배치합니다.'
+    : '달걀 타일에 인물 그림을 표시하고, 가운데 팔각형 타일은 4열 3행으로 배치합니다.';
 }
 
 function renderPlayerCountRow(){
@@ -397,14 +459,10 @@ function renderPlayerConfigList(){
 }
 
 document.getElementById('startBtn').onclick = startGame;
-document.getElementById('restartBtn').onclick = ()=>{
-  document.getElementById('game').style.display='none';
-  document.getElementById('setup').style.display='block';
-};
+document.getElementById('restartBtn').onclick = leaveGame;
 document.getElementById('resetBtn').onclick = ()=>{
   document.getElementById('winOverlay').style.display='none';
-  document.getElementById('game').style.display='none';
-  document.getElementById('setup').style.display='block';
+  leaveGame();
 };
 
 /* ================= 게임 초기화 ================= */
@@ -456,9 +514,16 @@ function startGame(){
   state = buildInitialState();
   setStatus('');
   document.getElementById('setup').style.display='none';
-  document.getElementById('game').style.display='block';
+  document.getElementById('game').classList.add('on');
+  document.body.classList.add('playing');
   layoutBoard();
   renderAll();
+}
+
+function leaveGame(){
+  document.getElementById('game').classList.remove('on');
+  document.body.classList.remove('playing');
+  document.getElementById('setup').style.display='block';
 }
 
 /* ================= 좌표 계산 ================= */
@@ -496,15 +561,78 @@ function ellipseEvenPoints(rx, ry, n){
   return result;
 }
 
+// 타원 둘레 길이(라마누잔 근사) — 타일 크기를 둘레에 맞춰 정하는 데 사용
+function ellipsePerimeter(a,b){
+  const h3 = 3*Math.pow(a-b,2)/Math.pow(a+b,2);
+  return Math.PI*(a+b)*(1 + h3/(10+Math.sqrt(4-h3)));
+}
+
 function layoutBoard(){
   const board = document.getElementById('board');
+  const root = document.documentElement;
+  const sp = spec();
   const w = board.clientWidth, h = board.clientHeight;
-  const rx = w*0.455, ry = h*0.44;
+  if(!w || !h) return;
+
+  // 1) 타일 크기: 트랙 둘레를 24등분한 간격을 넘지 않게 정해 겹침을 원천 차단
+  const rx0 = w*0.455, ry0 = h*0.44;
+  const spacing = ellipsePerimeter(rx0, ry0) / NUM_EGG_TILES;
+  let eggW = Math.min(sp.maxEggW, spacing*0.94);
+  eggW = Math.max(sp.minEggW, eggW);
+  const eggH = Math.round(eggW * (sp.showPicture ? 0.714 : 0.66));
+  eggW = Math.round(eggW);
+
+  // 2) 트랙 반지름: 타일이 보드 밖으로 나가지 않도록 안쪽으로 물림
+  const rx = Math.max(60, w/2 - eggW/2 - 2);
+  const ry = Math.max(60, h/2 - eggH/2 - 2);
+
   const cx = w/2, cy = h/2;
-  const pts = ellipseEvenPoints(rx, ry, NUM_EGG_TILES);
-  eggPositionsPx = pts.map(p=>({x: cx+p.x, y: cy+p.y}));
+  eggPositionsPx = ellipseEvenPoints(rx, ry, NUM_EGG_TILES)
+    .map(p=>({x: cx+p.x, y: cy+p.y}));
+
+  // 3) 가운데 팔각형: 트랙 안쪽 빈 공간에 최대 크기로
+  const gap = Math.max(6, Math.round(eggW*0.11));
+  const innerW = 2*rx - eggW - 12;
+  const innerH = 2*ry - eggH - 12;
+  let oct = Math.min(
+    (innerW - (sp.cols-1)*gap) / sp.cols,
+    (innerH - (sp.rows-1)*gap) / sp.rows,
+    sp.maxOct
+  );
+  oct = Math.max(30, Math.floor(oct));
+  const centerW = oct*sp.cols + gap*(sp.cols-1);
+
+  // 4) CSS 변수로 전달
+  root.style.setProperty('--egg-w', eggW+'px');
+  root.style.setProperty('--egg-h', eggH+'px');
+  root.style.setProperty('--egg-bw', (eggW<70 ? 2 : 3)+'px');
+  root.style.setProperty('--egg-font', Math.max(9, Math.round(eggW*0.175))+'px');
+  root.style.setProperty('--cols', sp.cols);
+  root.style.setProperty('--oct-gap', gap+'px');
+  root.style.setProperty('--center-w', Math.round(centerW)+'px');
+  root.style.setProperty('--octnum-size', Math.round(oct*0.42)+'px');
+  root.style.setProperty('--chick-d', Math.max(20, Math.round(eggW*0.31))+'px');
+
+  // 5) 트랙 띠 그리기 (바깥 타원 - 안쪽 구멍)
+  const shape = document.getElementById('trackShape');
+  const hole = document.getElementById('trackHole');
+  if(shape) shape.style.borderRadius = '50%';
+  if(hole){
+    const insetX = eggW*0.55 + 6, insetY = eggH*0.55 + 6;
+    hole.style.left = insetX+'px';
+    hole.style.top = insetY+'px';
+    hole.style.right = insetX+'px';
+    hole.style.bottom = insetY+'px';
+    hole.style.borderRadius = '50%';
+  }
 }
-window.addEventListener('resize', ()=>{ if(state){ layoutBoard(); renderAll(); } });
+
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+  if(!state) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{ layoutBoard(); renderAll(); }, 120);
+});
 
 /* ================= 목표 타일 계산 ================= */
 function getTarget(playerIdx){
@@ -556,9 +684,10 @@ function renderEggs(){
     const pos = eggPositionsPx[i] || {x:0,y:0};
     const c = charById(tile.charId);
     const isTarget = target && target.pos===i;
-    return `<div class="egg ${isTarget?'target':''}" style="left:${pos.x}px;top:${pos.y}px;">
-      <img src="${c.img}" alt="${c.name}">
-    </div>`;
+    const inner = spec().showPicture
+      ? `<img src="${c.img}" alt="${c.name}">`
+      : `<span class="egg-name">${c.name}</span>`;
+    return `<div class="egg ${isTarget?'target':''}" style="left:${pos.x}px;top:${pos.y}px;">${inner}</div>`;
   }).join('');
 }
 
@@ -569,7 +698,9 @@ function renderChicks(){
     const isActive = p.idx === state.currentPlayerIndex;
     const scale = isActive ? 1.35 : 0.9;
     const opacity = isActive ? 1 : 0.55;
-    return `<div class="chick" style="left:${pos.x+22}px;top:${pos.y-38}px;background:${p.color};
+    const eggW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--egg-w')) || 98;
+    const eggH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--egg-h')) || 70;
+    return `<div class="chick" style="left:${pos.x + eggW*0.22}px;top:${pos.y - eggH*0.55}px;background:${p.color};
       transform:scale(${scale});opacity:${opacity};" title="${escapeHtml(p.name)}">
       🐥
       <span class="feathers">${'🪶'.repeat(Math.min(p.tails,4))}</span>
@@ -674,6 +805,7 @@ function showWin(){
 
 /* ================= 초기 렌더 ================= */
 renderCharPreview();
+renderDeviceRow();
 renderPlayerCountRow();
 renderPlayerConfigList();
 </script>
