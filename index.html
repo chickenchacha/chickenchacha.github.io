@@ -187,12 +187,14 @@
     width:100%;height:100%;object-fit:cover;display:block;
     transform:scale(1.1);
   }
-  /* 스마트폰 모드: 그림 대신 이름만 (타일을 작게 줄이기 위해) */
+  /* 스마트폰 모드: 그림 대신 이름만 (타일을 작게 줄이기 위해)
+     타일 배경은 테마와 무관하게 항상 흰색이므로 글자색도 고정 진회색으로 둔다.
+     (--ink 를 쓰면 다크 모드에서 흰 배경에 밝은 글자가 되어 안 보임) */
   .egg .egg-name{
     font-family:"Do Hyeon","Malgun Gothic",sans-serif;
     font-size:var(--egg-font,13px);line-height:1.15;
-    color:var(--ink);text-align:center;
-    padding:0 4px;word-break:keep-all;
+    color:#1b2a33;text-align:center;
+    padding:0 3px;word-break:keep-all;
   }
   .egg.target{
     border-color:var(--gold);
@@ -273,9 +275,27 @@
   #winCard .trophy{font-size:56px;}
   #resetBtn{margin-top:18px;}
 
+  /* 스마트폰 모드: 상단 정보 영역을 작게 줄여 보드에 공간을 넘김 */
+  #game.mobile #topbar{padding:6px 8px 4px;gap:6px;}
+  #game.mobile #playerList{gap:6px;}
+  #game.mobile .player-badge{
+    padding:4px 8px;gap:6px;border-width:2px;border-radius:10px;
+  }
+  #game.mobile .player-badge .dot{width:11px;height:11px;}
+  #game.mobile .player-badge .pname{font-size:11px;}
+  #game.mobile .player-badge .ptails{font-size:10px;}
+  #game.mobile #turnSide{gap:6px;}
+  #game.mobile #turnIndicator{
+    padding:5px 12px;min-width:0;border-radius:10px;
+  }
+  #game.mobile #turnIndicator .label{font-size:9px;}
+  #game.mobile #turnIndicator .name{font-size:15px;}
+  #game.mobile #restartBtn{padding:5px 9px;font-size:11px;border-radius:9px;}
+  #game.mobile #statusMsg{font-size:11.5px;min-height:16px;padding:0 8px 2px;}
+
   @media (max-width:600px){
-    #topbar{flex-direction:column;align-items:stretch;}
-    #turnIndicator{text-align:center;}
+    #game:not(.mobile) #topbar{flex-direction:column;align-items:stretch;}
+    #game:not(.mobile) #turnIndicator{text-align:center;}
   }
 </style>
 </head>
@@ -376,7 +396,7 @@ let setupConfig = {
 // 기기별 배치 규칙
 const DEVICE_SPEC = {
   pc:     { cols:4, rows:3, maxEggW:98, minEggW:62, showPicture:true,  maxOct:110 },
-  mobile: { cols:3, rows:4, maxEggW:74, minEggW:48, showPicture:false, maxOct:150 }
+  mobile: { cols:3, rows:4, maxEggW:74, minEggW:48, showPicture:false, maxOct:56 }
 };
 function spec(){ return DEVICE_SPEC[setupConfig.device] || DEVICE_SPEC.pc; }
 
@@ -514,10 +534,37 @@ function startGame(){
   state = buildInitialState();
   setStatus('');
   document.getElementById('setup').style.display='none';
-  document.getElementById('game').classList.add('on');
+  const gameEl = document.getElementById('game');
+  gameEl.classList.add('on');
+  gameEl.classList.toggle('mobile', setupConfig.device === 'mobile');
   document.body.classList.add('playing');
-  layoutBoard();
+  // 상단바를 먼저 채워 높이를 확정한 뒤에 보드 좌표를 계산해야 한다.
+  // (반대 순서면 보드가 나중에 줄어들어 아래쪽 타일이 화면 밖으로 밀려남)
   renderAll();
+  relayoutBoard();
+  observeBoardSize();
+}
+
+// 보드 안쪽만 다시 그린다 — 상단바를 건드리지 않으므로 크기 변화 루프가 생기지 않음
+function relayoutBoard(){
+  if(!state) return;
+  layoutBoard();
+  renderEggs();
+  renderCenter();
+  renderChicks();
+}
+
+let boardRO = null, lastBoardSize = '';
+function observeBoardSize(){
+  if(boardRO || typeof ResizeObserver === 'undefined') return;
+  boardRO = new ResizeObserver(entries=>{
+    const r = entries[0].contentRect;
+    const key = Math.round(r.width)+'x'+Math.round(r.height);
+    if(key === lastBoardSize) return;
+    lastBoardSize = key;
+    relayoutBoard();
+  });
+  boardRO.observe(document.getElementById('board'));
 }
 
 function leaveGame(){
@@ -631,7 +678,7 @@ let resizeTimer = null;
 window.addEventListener('resize', ()=>{
   if(!state) return;
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(()=>{ layoutBoard(); renderAll(); }, 120);
+  resizeTimer = setTimeout(()=>{ renderAll(); relayoutBoard(); }, 120);
 });
 
 /* ================= 목표 타일 계산 ================= */
