@@ -458,9 +458,12 @@ let setupConfig = {
 };
 
 // 기기별 배치 규칙
+//  ratio     : 달걀 타일의 높이 / 너비
+//  octRatio  : 팔각형 한 변 / 달걀 타일 너비  (두 타일의 크기 균형을 고정하는 값)
+//  maxAspect : 트랙 타원의 최대 가로세로 비 (넓은 화면에서 너무 납작해지는 것 방지)
 const DEVICE_SPEC = {
-  pc:     { cols:4, rows:3, maxEggW:98, minEggW:62, showPicture:true,  maxOct:110 },
-  mobile: { cols:3, rows:4, maxEggW:74, minEggW:48, showPicture:false, maxOct:56 }
+  pc:     { cols:4, rows:3, maxEggW:140, minEggW:60, ratio:0.714, showPicture:true,  octRatio:0.82, maxAspect:2.0 },
+  mobile: { cols:3, rows:4, maxEggW:74,  minEggW:48, ratio:0.66,  showPicture:false, octRatio:0.95, maxAspect:2.0 }
 };
 function spec(){ return DEVICE_SPEC[setupConfig.device] || DEVICE_SPEC.pc; }
 
@@ -682,35 +685,51 @@ function layoutBoard(){
   const board = document.getElementById('board');
   const root = document.documentElement;
   const sp = spec();
-  const w = board.clientWidth, h = board.clientHeight;
-  if(!w || !h) return;
+  const wAll = board.clientWidth, hAll = board.clientHeight;
+  if(!wAll || !hAll) return;
 
-  // 1) 타일 크기: 트랙 둘레를 24등분한 간격을 넘지 않게 정해 겹침을 원천 차단
-  const rx0 = w*0.455, ry0 = h*0.44;
-  const spacing = ellipsePerimeter(rx0, ry0) / NUM_EGG_TILES;
-  let eggW = Math.min(sp.maxEggW, spacing*0.94);
-  eggW = Math.max(sp.minEggW, eggW);
-  const eggH = Math.round(eggW * (sp.showPicture ? 0.714 : 0.66));
-  eggW = Math.round(eggW);
+  // 0) 화면이 아주 넓어도 트랙이 지나치게 납작해지지 않도록 가로 폭을 제한하고
+  //    남는 공간은 좌우 여백으로 돌린다.
+  const w = Math.min(wAll, hAll * sp.maxAspect);
+  const h = hAll;
+  const ox = (wAll - w) / 2;
+
+  // 1) 달걀 타일 크기 = 트랙 둘레의 1/24 에 맞춘다. 이것이 화면 크기에 따라
+  //    전체 크기를 결정하는 하나의 기준값이 된다.
+  //    (타일이 커지면 트랙 반지름이 줄고 둘레도 줄기 때문에 몇 번 반복해 수렴시킨다)
+  const longSide = Math.max(1, sp.ratio);   // 너비 1 기준 긴 변의 비율
+  let eggW = Math.min(sp.maxEggW, w * 0.09);
+  for(let i=0;i<5;i++){
+    const eh = eggW * sp.ratio;
+    const rxT = Math.max(50, w/2 - eggW/2 - 2);
+    const ryT = Math.max(50, h/2 - eh/2 - 2);
+    const spacing = ellipsePerimeter(rxT, ryT) / NUM_EGG_TILES;
+    eggW = Math.min(sp.maxEggW, (spacing * 0.94) / longSide);
+  }
+  eggW = Math.round(Math.max(sp.minEggW, eggW));
+  const eggH = Math.round(eggW * sp.ratio);
 
   // 2) 트랙 반지름: 타일이 보드 밖으로 나가지 않도록 안쪽으로 물림
-  const rx = Math.max(60, w/2 - eggW/2 - 2);
-  const ry = Math.max(60, h/2 - eggH/2 - 2);
+  const rx = Math.max(50, w/2 - eggW/2 - 2);
+  const ry = Math.max(50, h/2 - eggH/2 - 2);
 
-  const cx = w/2, cy = h/2;
+  const cx = ox + w/2, cy = h/2;
   eggPositionsPx = ellipseEvenPoints(rx, ry, NUM_EGG_TILES)
     .map(p=>({x: cx+p.x, y: cy+p.y}));
 
-  // 3) 가운데 팔각형: 트랙 안쪽 빈 공간에 최대 크기로
-  const gap = Math.max(6, Math.round(eggW*0.11));
-  const innerW = 2*rx - eggW - 12;
-  const innerH = 2*ry - eggH - 12;
-  let oct = Math.min(
+  // 3) 팔각형 타일은 달걀 타일 크기에 "비례"시킨다. 남는 공간을 채우게 두면
+  //    창 크기에 따라 두 타일의 크기 균형이 제각각으로 흐트러진다.
+  //    안쪽 공간이 모자랄 때만 그만큼 줄인다.
+  const gap = Math.max(6, Math.round(eggW * 0.11));
+  const innerW = 2*rx - eggW - 16;
+  const innerH = 2*ry - eggH - 16;
+  let oct = eggW * sp.octRatio;
+  oct = Math.min(
+    oct,
     (innerW - (sp.cols-1)*gap) / sp.cols,
-    (innerH - (sp.rows-1)*gap) / sp.rows,
-    sp.maxOct
+    (innerH - (sp.rows-1)*gap) / sp.rows
   );
-  oct = Math.max(30, Math.floor(oct));
+  oct = Math.max(28, Math.floor(oct));
   const centerW = oct*sp.cols + gap*(sp.cols-1);
 
   // 4) CSS 변수로 전달
@@ -724,16 +743,26 @@ function layoutBoard(){
   root.style.setProperty('--octnum-size', Math.round(oct*0.42)+'px');
   root.style.setProperty('--chick-d', Math.max(20, Math.round(eggW*0.31))+'px');
 
-  // 5) 트랙 띠 그리기 (바깥 타원 - 안쪽 구멍)
+  // 5) 트랙 띠 그리기 (바깥 타원 - 안쪽 구멍). 가로를 제한했으므로 위치도 함께 맞춘다.
   const shape = document.getElementById('trackShape');
   const hole = document.getElementById('trackHole');
-  if(shape) shape.style.borderRadius = '50%';
+  if(shape){
+    shape.style.left = ox+'px';
+    shape.style.top = '0px';
+    shape.style.right = 'auto';
+    shape.style.bottom = 'auto';
+    shape.style.width = w+'px';
+    shape.style.height = h+'px';
+    shape.style.borderRadius = '50%';
+  }
   if(hole){
     const insetX = eggW*0.55 + 6, insetY = eggH*0.55 + 6;
-    hole.style.left = insetX+'px';
+    hole.style.left = (ox + insetX)+'px';
     hole.style.top = insetY+'px';
-    hole.style.right = insetX+'px';
-    hole.style.bottom = insetY+'px';
+    hole.style.right = 'auto';
+    hole.style.bottom = 'auto';
+    hole.style.width = Math.max(0, w - 2*insetX)+'px';
+    hole.style.height = Math.max(0, h - 2*insetY)+'px';
     hole.style.borderRadius = '50%';
   }
 }
