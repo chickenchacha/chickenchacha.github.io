@@ -39,3 +39,41 @@
 ## 만든 것
 
 순수 HTML/CSS/JavaScript 한 파일. 외부 라이브러리나 빌드 과정이 없습니다.
+
+## 다른 PC에서 이어서 작업하기
+
+이 저장소만 있으면 어느 PC에서든 작업할 수 있습니다. 인물 그림 원본도 `assets/characters/` 에 함께 들어 있습니다.
+
+**1. 내려받기** — 새 PC에서 Git이 설치돼 있어야 합니다 ([git-scm.com](https://git-scm.com)).
+
+```bash
+git clone https://github.com/sonjm20/history-chicken-game.git
+```
+
+**2. 수정하고 올리기**
+
+```bash
+git pull
+# ... 파일 수정 ...
+git add -A
+git commit -m "무엇을 바꿨는지 한 줄"
+git push
+```
+
+`git push`를 처음 할 때 GitHub 로그인 창이 뜹니다. 한 번 로그인하면 그 PC에 기억됩니다.
+
+**3. 작업 시작 전에는 항상 `git pull`** — 다른 PC에서 바꾼 내용을 먼저 받아와야 충돌이 안 납니다.
+
+푸시하면 1~2분 뒤 웹 주소에 자동으로 반영됩니다.
+
+> **주의:** 클론은 OneDrive·구글드라이브 같은 동기화 폴더 **밖에** 두세요. 동기화 폴더 안에 두면 `.git` 폴더가 두 PC에서 동시에 동기화되면서 저장소가 깨질 수 있습니다. `C:\projects\` 처럼 평범한 폴더를 쓰세요.
+
+### 폴더 구조
+
+```
+index.html              버전 1 (스마트폰에서 이름 타일)
+v2/index.html           버전 2 (스마트폰에서 그림 타일)
+assets/characters/      인물 그림 원본 12장
+```
+
+인물 그림은 HTML 안에 base64로 박혀 있어서, 그림을 바꾸려면 `assets/characters/` 의 파일을 교체한 뒤 HTML 안의 `CHARACTERS` 배열을 다시 만들어 넣어야 합니다.

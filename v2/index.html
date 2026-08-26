@@ -123,7 +123,49 @@
     box-shadow:0 0 0 1px var(--border);
   }
   .char-chip img{width:100%;display:block;}
-  #startBtn{display:block;margin:10px auto 0;font-size:19px;padding:14px 40px;}
+  .start-row{
+    display:flex;gap:10px;justify-content:center;align-items:center;
+    flex-wrap:wrap;margin-top:12px;
+  }
+  #startBtn{font-size:19px;padding:14px 40px;}
+  #rulesBtn{font-size:15px;padding:13px 22px;}
+
+  /* ---------- 게임 설명 (책처럼 넘겨 보는 화면) ---------- */
+  #rules{display:none;max-width:720px;margin:0 auto;padding:28px 20px 60px;}
+  #rules.on{display:block;}
+  .rule-book{
+    background:var(--surface);border:1px solid var(--border);border-radius:18px;
+    box-shadow:var(--shadow);padding:24px 26px;
+    min-height:390px;display:flex;flex-direction:column;
+  }
+  .rule-step{
+    font-size:12px;letter-spacing:.1em;color:var(--accent);font-weight:bold;
+  }
+  .rule-book h2{
+    font-size:25px;margin:6px 0 16px;color:var(--accent-dark);
+  }
+  .rule-body{flex:1;font-size:15px;line-height:1.8;}
+  .rule-body p{margin:0 0 12px;}
+  .rule-body ul{margin:0 0 12px;padding-left:20px;}
+  .rule-body li{margin-bottom:9px;}
+  .rule-body b{color:var(--accent-dark);}
+  .rule-tip{
+    background:var(--surface2);border-left:4px solid var(--gold);
+    border-radius:8px;padding:11px 14px;font-size:14px;line-height:1.65;
+  }
+  .rule-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;margin-top:20px;flex-wrap:wrap;
+  }
+  .rule-dots{display:flex;gap:7px;align-items:center;}
+  .rule-dot{
+    width:9px;height:9px;border-radius:50%;background:var(--border);
+    transition:background .2s, transform .2s;
+  }
+  .rule-dot.on{background:var(--accent);transform:scale(1.25);}
+  .rule-pageno{font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .rule-nav button{padding:9px 16px;font-size:14px;}
+  #rulesBack{display:block;margin:16px auto 0;}
 
   /* ---------- Game screen ---------- */
   #game{display:none;}
@@ -341,7 +383,29 @@
     <div class="char-preview" id="charPreview"></div>
   </div>
 
-  <button id="startBtn">게임 시작 ▶</button>
+  <div class="start-row">
+    <button class="secondary" id="rulesBtn">📖 게임 설명</button>
+    <button id="startBtn">게임 시작 ▶</button>
+  </div>
+</div>
+
+<!-- ============ RULES SCREEN ============ -->
+<div id="rules">
+  <div class="title-wrap">
+    <h1>📖 게임 방법</h1>
+  </div>
+  <div class="rule-book">
+    <div class="rule-step" id="ruleStep"></div>
+    <h2 id="ruleTitle"></h2>
+    <div class="rule-body" id="ruleBody"></div>
+    <div class="rule-nav">
+      <button class="secondary" id="rulePrev">◀ 이전</button>
+      <div class="rule-dots" id="ruleDots"></div>
+      <span class="rule-pageno" id="rulePageNo"></span>
+      <button id="ruleNext">다음 ▶</button>
+    </div>
+  </div>
+  <button class="secondary" id="rulesBack">시작화면으로 돌아가기</button>
 </div>
 
 <!-- ============ GAME SCREEN ============ -->
@@ -867,6 +931,112 @@ function showWin(){
   text.textContent = `🎉 ${w.name}님 승리! 🎉 (꽁지 ${w.tails}개 모두 획득!)`;
   overlay.style.display = 'flex';
 }
+
+/* ================= 게임 설명 (책처럼 넘겨 보기) ================= */
+const RULE_PAGES = [
+  {
+    step:'준비',
+    title:'무엇이 놓여 있나요?',
+    html:`
+      <ul>
+        <li><b>바깥 타원의 달걀 타일 24장</b> — 위인 12명이 2장씩 섞여 놓여 있습니다. 그림은 처음부터 계속 보입니다.</li>
+        <li><b>가운데 팔각형 타일 12장</b> — 위인마다 1장씩, 그림이 안 보이게 뒤집혀 있습니다.</li>
+        <li><b>닭 말</b> — 참가자마다 하나씩 달걀 타일 위에 놓입니다. 엉덩이에 <b>꽁지(깃털)</b>를 1~2개 꽂고 시작합니다.</li>
+      </ul>
+      <div class="rule-tip">시작하기 전 화면에서 참가 인원(2~6명)과 꽁지 개수를 정할 수 있습니다.</div>`
+  },
+  {
+    step:'내 차례',
+    title:'내 차례에 무엇을 하나요?',
+    html:`
+      <ul>
+        <li>내 닭의 <b>바로 앞 달걀 타일</b>을 봅니다. 화면에서 <b>노란빛으로 반짝이는 타일</b>이 지금 찾아야 할 인물입니다.</li>
+        <li>가운데 팔각형 타일 중 하나를 골라 눌러서 뒤집습니다.</li>
+        <li>뒤집은 그림이 목표 인물과 같은지 확인합니다.</li>
+      </ul>
+      <div class="rule-tip">팔각형 타일에는 <b>1~12번</b>이 적혀 있습니다. 여럿이 한 화면을 볼 때 "7번 뒤집어 주세요"처럼 번호로 말하면 편합니다.</div>`
+  },
+  {
+    step:'성공과 실패',
+    title:'맞히면? 틀리면?',
+    html:`
+      <p><b>맞혔다면</b> — 내 닭이 한 칸 앞으로 갑니다. 그리고 <b>차례가 끝나지 않습니다.</b> 이어서 또 뒤집어 계속 전진할 수 있습니다. 틀릴 때까지 몇 칸이든 갈 수 있습니다.</p>
+      <p><b>틀렸다면</b> — 뒤집은 타일은 <b>그 자리에 그대로 다시 덮이고</b>, 내 차례는 즉시 끝나 다음 사람에게 넘어갑니다.</p>
+      <div class="rule-tip">뒤집혔던 타일에 어떤 인물이 있었는지 기억해 두는 것이 이 게임의 핵심입니다.</div>`
+  },
+  {
+    step:'앞지르기',
+    title:'상대를 뛰어넘고 꽁지 뺏기',
+    html:`
+      <ul>
+        <li>내 바로 앞 칸에 <b>다른 닭이 서 있으면</b>, 그 닭을 건너뛴 <b>그다음 칸</b>이 목표가 됩니다.</li>
+        <li>그 목표 인물을 맞히면 상대를 <b>뛰어넘어 앞지르기</b>를 합니다.</li>
+        <li>이때 <b>앞지름을 당한 닭의 꽁지를 전부 빼앗아</b> 내 닭에 꽂습니다.</li>
+        <li>여러 마리를 한 번에 넘으면 그 닭들의 꽁지를 <b>모두</b> 가져옵니다.</li>
+      </ul>
+      <div class="rule-tip">꽁지를 다 빼앗긴 닭도 계속 달립니다. 다시 앞지르면 도로 빼앗아 올 수 있습니다.</div>`
+  },
+  {
+    step:'승리',
+    title:'언제 이기나요?',
+    html:`
+      <p>다른 닭들의 <b>꽁지를 전부 모은 사람이 승리</b>합니다. 한 사람이 모든 꽁지를 갖게 되면 게임이 끝납니다.</p>
+      <p style="margin-top:18px;"><b>화면 보는 법</b></p>
+      <ul>
+        <li>오른쪽 위에 <b>지금 차례인 사람</b>의 이름이 크게 나옵니다.</li>
+        <li>자기 차례인 닭은 <b>크고 진하게</b>, 나머지는 작고 흐리게 보입니다.</li>
+        <li>이름표의 <b>🪶 숫자</b>가 지금 가진 꽁지 개수입니다.</li>
+      </ul>`
+  }
+];
+
+let rulePage = 0;
+
+function renderRulePage(){
+  const p = RULE_PAGES[rulePage];
+  document.getElementById('ruleStep').textContent = p.step;
+  document.getElementById('ruleTitle').textContent = p.title;
+  document.getElementById('ruleBody').innerHTML = p.html;
+  document.getElementById('rulePageNo').textContent = `${rulePage+1} / ${RULE_PAGES.length}`;
+  document.getElementById('rulePrev').disabled = (rulePage === 0);
+  document.getElementById('ruleNext').disabled = (rulePage === RULE_PAGES.length-1);
+  document.getElementById('ruleDots').innerHTML =
+    RULE_PAGES.map((_,i)=>`<span class="rule-dot ${i===rulePage?'on':''}"></span>`).join('');
+  window.scrollTo(0,0);
+}
+
+function turnRulePage(delta){
+  const next = rulePage + delta;
+  if(next < 0 || next >= RULE_PAGES.length) return;
+  rulePage = next;
+  renderRulePage();
+}
+
+function showRules(){
+  rulePage = 0;
+  renderRulePage();
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('rules').classList.add('on');
+}
+
+function hideRules(){
+  document.getElementById('rules').classList.remove('on');
+  document.getElementById('setup').style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+document.getElementById('rulesBtn').onclick = showRules;
+document.getElementById('rulesBack').onclick = hideRules;
+document.getElementById('rulePrev').onclick = ()=>turnRulePage(-1);
+document.getElementById('ruleNext').onclick = ()=>turnRulePage(1);
+
+// 설명 화면에서는 좌우 방향키로도 넘길 수 있게
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('rules').classList.contains('on')) return;
+  if(e.key === 'ArrowLeft') turnRulePage(-1);
+  else if(e.key === 'ArrowRight') turnRulePage(1);
+  else if(e.key === 'Escape') hideRules();
+});
 
 /* ================= 초기 렌더 ================= */
 renderCharPreview();

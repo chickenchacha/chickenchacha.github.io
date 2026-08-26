@@ -1,0 +1,15 @@
+# 여러 PC(Windows/Mac 등)에서 함께 작업할 때 줄바꿈 차이로
+# 파일 전체가 바뀐 것처럼 보이는 문제를 막는다.
+* text=auto
+
+*.html text
+*.md   text
+*.yaml text
+*.yml  text
+
+# 이미지는 절대 텍스트로 변환하지 않는다 (변환되면 파일이 깨짐)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
