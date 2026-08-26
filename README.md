@@ -6,8 +6,8 @@
 
 | 버전 | 주소 | 스마트폰에서 달걀 타일 |
 |---|---|---|
-| 버전 1 | <https://sonjm20.github.io/history-chicken-game/> | 인물 **이름**만 표시 |
-| 버전 2 | <https://sonjm20.github.io/history-chicken-game/v2/> | 인물 **그림** 표시 |
+| 버전 1 | <https://chickenchacha.github.io/> | 인물 **이름**만 표시 |
+| 버전 2 | <https://chickenchacha.github.io/v2/> | 인물 **그림** 표시 |
 
 두 버전은 규칙과 기능이 같고, 스마트폰에서 달걀 타일을 어떻게 보여줄지만 다릅니다. PC·전자칠판 모드에서는 두 버전이 동일하게 인물 그림을 보여줍니다. 수업에서 어느 쪽이 더 잘 보이는지 비교해 보고 고르시면 됩니다.
 
@@ -47,7 +47,7 @@
 **1. 내려받기** — 새 PC에서 Git이 설치돼 있어야 합니다 ([git-scm.com](https://git-scm.com)).
 
 ```bash
-git clone https://github.com/sonjm20/history-chicken-game.git
+git clone https://github.com/chickenchacha/chickenchacha.github.io.git
 ```
 
 **2. 수정하고 올리기**
