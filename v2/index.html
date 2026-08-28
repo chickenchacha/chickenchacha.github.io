@@ -326,18 +326,32 @@
     transform:scale(1.16);
     z-index:5;
   }
+  /* 말(닭). 자기 차례가 된 말은 서 있는 타일을 통째로 덮을 만큼 커진다. */
   .chick{
-    position:absolute;
-    width:var(--chick-d,30px);height:var(--chick-d,30px);border-radius:50%;
+    position:absolute;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    font-size:calc(var(--chick-d,30px) * .5);
     border:3px solid var(--surface);box-shadow:0 2px 5px rgba(32,48,58,0.35);
-    transition:left .4s ease, top .4s ease, transform .3s, opacity .3s;
+    transition:left .35s ease, top .35s ease, width .3s ease, height .3s ease,
+               font-size .3s ease, opacity .3s ease;
     z-index:6;
   }
+  .chick.active{
+    z-index:9;
+    border-width:4px;border-color:#fff;
+    box-shadow:0 0 0 3px rgba(32,48,58,.3), 0 8px 20px rgba(32,48,58,.5);
+    animation:chickPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes chickPulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.05);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .chick.active{animation:none;}
+  }
   .chick .feathers{
-    position:absolute;top:calc(var(--chick-d,30px) * -.34);right:-6px;
-    font-size:calc(var(--chick-d,30px) * .37);
+    position:absolute;top:-7%;right:0;
+    font-size:.34em;line-height:1;
+    text-shadow:0 1px 2px rgba(0,0,0,.45);
   }
 
   #center{
@@ -947,15 +961,27 @@ function renderEggs(){
 
 function renderChicks(){
   const layer = document.getElementById('chickLayer');
+  const cs = getComputedStyle(document.documentElement);
+  const eggW = parseFloat(cs.getPropertyValue('--egg-w')) || 98;
+  const eggH = parseFloat(cs.getPropertyValue('--egg-h')) || 70;
+  const smallD = parseFloat(cs.getPropertyValue('--chick-d')) || 30;
+
   layer.innerHTML = state.players.map(p=>{
     const pos = eggPositionsPx[p.position] || {x:0,y:0};
     const isActive = p.idx === state.currentPlayerIndex;
-    const scale = isActive ? 1.35 : 0.9;
-    const opacity = isActive ? 1 : 0.55;
-    const eggW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--egg-w')) || 98;
-    const eggH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--egg-h')) || 70;
-    return `<div class="chick" style="left:${pos.x + eggW*0.22}px;top:${pos.y - eggH*0.55}px;background:${p.color};
-      transform:scale(${scale});opacity:${opacity};" title="${escapeHtml(p.name)}">
+
+    // 자기 차례인 말: 타일과 같은 크기로 커져 타일 위에 정확히 겹친다.
+    // 나머지 말: 작게 줄여 타일 오른쪽 위 모서리에 비켜 세운다.
+    const w = isActive ? eggW * 1.02 : smallD;
+    const h = isActive ? eggH * 1.02 : smallD;
+    const left = isActive ? pos.x - w/2 : pos.x + eggW*0.22;
+    const top  = isActive ? pos.y - h/2 : pos.y - eggH*0.55;
+    const fs   = Math.round(Math.min(w,h) * (isActive ? 0.6 : 0.5));
+
+    return `<div class="chick ${isActive?'active':''}"
+      style="left:${left}px;top:${top}px;width:${w}px;height:${h}px;
+             font-size:${fs}px;background:${p.color};opacity:${isActive?1:0.6};"
+      title="${escapeHtml(p.name)}">
       🐥
       <span class="feathers">${'🪶'.repeat(Math.min(p.tails,4))}</span>
     </div>`;
