@@ -89,8 +89,14 @@
     max-width:760px;margin:0 auto;padding:28px 20px 60px;
   }
   .title-wrap{text-align:center;margin-bottom:18px;}
-  .title-wrap h1{font-size:36px;color:var(--accent-dark);letter-spacing:.5px;}
-  .title-wrap p{color:var(--ink-soft);margin-top:8px;font-size:14px;}
+  .title-wrap h1{
+    font-size:clamp(21px,5.6vw,36px);color:var(--accent-dark);letter-spacing:.5px;
+    word-break:keep-all;
+  }
+  .title-wrap p{
+    color:var(--ink-soft);margin-top:8px;font-size:clamp(12px,3.2vw,14px);
+    word-break:keep-all;
+  }
   .setup-card{
     background:var(--surface);border-radius:18px;box-shadow:var(--shadow);
     padding:20px 22px;margin-bottom:18px;border:1px solid var(--border);
@@ -170,9 +176,45 @@
   .topbtn{
     background:var(--surface);color:var(--accent-dark);
     border:2px solid var(--accent);box-shadow:none;
-    padding:10px 14px;font-size:14px;white-space:nowrap;
+    height:44px;padding:0 15px;font-size:14px;white-space:nowrap;
+    line-height:1;
+    display:inline-flex;align-items:center;justify-content:center;gap:5px;
   }
   .topbtn:hover{background:var(--accent);color:#fff;}
+
+  /* ---------- 좁은 화면(스마트폰)에서 시작화면 정리 ----------
+     넓은 화면: [게임설명]  제목  [인물설명]  — 한 줄
+     좁은 화면: 제목이 먼저 한 줄을 차지하고, 두 버튼이 그 아래 나란히 */
+  @media (max-width:640px){
+    #setup{padding:16px 14px 40px;}
+    .title-wrap{margin-bottom:14px;}
+    .title-head{justify-content:center;gap:8px;}
+    .title-head .titles{order:1;flex:1 1 100%;}
+    #rulesBtn{order:2;}
+    #charsBtn{order:3;}
+    .topbtn{height:38px;padding:0 13px;font-size:13px;}
+    .title-wrap .verline{font-size:11px;padding:4px 10px;margin-top:8px;}
+
+    .setup-card{padding:14px 16px;margin-bottom:12px;border-radius:14px;}
+    .setup-card h3{font-size:15px;margin-bottom:8px;}
+    .hint{font-size:12px;margin-top:8px;}
+    .row{gap:8px;}
+    button.toggle{padding:8px 12px;font-size:14px;}
+    .player-row{gap:8px;padding:8px 2px;}
+    .player-row input[type=text]{font-size:14px;padding:7px 9px;}
+    .tail-toggle button{padding:6px 9px;font-size:12px;}
+    .swatch{width:24px;height:24px;}
+    .char-preview{gap:6px;}
+    #startBtn{font-size:17px;padding:12px 32px;}
+
+    #rules,#chars{padding:16px 14px 40px;}
+    .rule-book{padding:16px;min-height:0;}
+    .rule-book h2{font-size:21px;}
+    .rule-body{font-size:14px;line-height:1.7;}
+    .rule-nav{gap:8px;}
+    .rule-nav button{padding:8px 12px;font-size:13px;}
+    .char-top img{width:104px;height:104px;}
+  }
 
   /* ---------- 인물 설명 화면 ---------- */
   #chars{display:none;max-width:720px;margin:0 auto;padding:28px 20px 60px;}
